@@ -338,34 +338,37 @@ app.get("/jobs/filter", async(req, res) => {
 
 
 //show details of a single job
-app.get("/jobs/:id", authenticateToken, async(req, res) => {
+app.get("/jobs/:id", authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.id 
-        const jobId = req.params.id
+        const userId = req.user.id;
+        const jobId = req.params.id;
 
         const getJobDetailsQuery = `
-          SELECT jobs.*
+          SELECT jobs.*,
           CASE 
             WHEN job_applications.user_id IS NOT NULL THEN 'Applied'
             ELSE 'Not Applied'
           END AS application_status
           FROM jobs
           LEFT JOIN job_applications
-          ON  jobs.id = job_applications.job_id  AND job_applications.user_id = ?
+          ON jobs.id = job_applications.job_id AND job_applications.user_id = ?
           WHERE jobs.id = ?
         `;
 
         const jobDetails = await database.get(getJobDetailsQuery, [userId, jobId]);
 
-        if(!jobDetails){
-            res.status(404).json({error: "Job Not Found"})
+        if (!jobDetails) {
+            res.status(404).json({ error: "Job Not Found" });
+            return;
         }
 
         res.status(200).json(jobDetails);
     } catch (error) {
-        res.status(500).json({error: "server error"})
+        console.error("Error:", error.message);
+        res.status(500).json({ error: "Server error" });
     }
 });
+
 
 
 //user apply for job
